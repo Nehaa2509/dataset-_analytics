@@ -4,9 +4,11 @@ from datetime import datetime
 import hashlib
 import os
 from functools import wraps
+from werkzeug.security import generate_password_hash, check_password_hash
 
 app = Flask(__name__)
-app.secret_key = os.urandom(24)  # Secret key for sessions
+# Use environment variable for secret key, fallback to a default for development
+app.secret_key = os.environ.get('SECRET_KEY', 'dev-secret-key-change-in-production')
 
 DATABASE = 'quiz_platform.db'
 
@@ -77,8 +79,8 @@ def init_db():
     conn.close()
 
 def hash_password(password):
-    """Hash password using SHA-256"""
-    return hashlib.sha256(password.encode()).hexdigest()
+    """Hash password using Werkzeug's secure password hashing (pbkdf2:sha256 with salt)"""
+    return generate_password_hash(password)
 
 # Authentication decorator
 def login_required(f):
@@ -107,6 +109,13 @@ def register():
         
         if not username or not password or not email:
             return render_template('register.html', error='All fields are required')
+        
+        # Basic validation
+        if len(password) < 6:
+            return render_template('register.html', error='Password must be at least 6 characters long')
+        
+        if len(username) < 3 or len(username) > 50:
+            return render_template('register.html', error='Username must be between 3 and 50 characters')
         
         conn = get_db()
         cursor = conn.cursor()
@@ -138,16 +147,15 @@ def login():
         
         conn = get_db()
         cursor = conn.cursor()
-        hashed_password = hash_password(password)
         
         cursor.execute(
-            'SELECT id, username FROM users WHERE username = ? AND password = ?',
-            (username, hashed_password)
+            'SELECT id, username, password FROM users WHERE username = ?',
+            (username,)
         )
         user = cursor.fetchone()
         conn.close()
         
-        if user:
+        if user and check_password_hash(user['password'], password):
             session['user_id'] = user['id']
             session['username'] = user['username']
             return redirect(url_for('dashboard'))
@@ -241,28 +249,43 @@ def submit_quiz(quiz_id):
         (session['user_id'], quiz_id, score, len(questions))
     )
     conn.commit()
+    score_id = cursor.lastrowid
     conn.close()
     
-    return redirect(url_for('result', quiz_id=quiz_id, score=score, total=total_points))
+    # Pass score_id instead of score/total to prevent URL manipulation
+    return redirect(url_for('result', score_id=score_id))
 
 @app.route('/result')
 @login_required
 def result():
     """Show quiz result"""
-    quiz_id = request.args.get('quiz_id')
-    score = request.args.get('score')
-    total = request.args.get('total')
+    score_id = request.args.get('score_id')
+    
+    if not score_id:
+        return redirect(url_for('dashboard'))
     
     conn = get_db()
     cursor = conn.cursor()
-    cursor.execute('SELECT title FROM quizzes WHERE id = ?', (quiz_id,))
-    quiz = cursor.fetchone()
+    
+    # Get score from database to prevent manipulation
+    cursor.execute('''
+        SELECT s.score, q.title, 
+               (SELECT SUM(points) FROM questions WHERE quiz_id = s.quiz_id) as total_points
+        FROM scores s
+        JOIN quizzes q ON s.quiz_id = q.id
+        WHERE s.id = ? AND s.user_id = ?
+    ''', (score_id, session['user_id']))
+    
+    result_data = cursor.fetchone()
     conn.close()
     
+    if not result_data:
+        return redirect(url_for('dashboard'))
+    
     return render_template('result.html', 
-                         quiz_title=quiz['title'] if quiz else 'Quiz',
-                         score=score, 
-                         total=total)
+                         quiz_title=result_data['title'],
+                         score=result_data['score'], 
+                         total=result_data['total_points'])
 
 @app.route('/leaderboard')
 @login_required
@@ -313,4 +336,6 @@ def api_get_questions(quiz_id):
 
 if __name__ == '__main__':
     init_db()
-    app.run(host='0.0.0.0', port=5000, debug=True)
+    # Only enable debug mode if DEBUG environment variable is set
+    debug_mode = os.environ.get('DEBUG', 'False').lower() == 'true'
+    app.run(host='0.0.0.0', port=5000, debug=debug_mode)

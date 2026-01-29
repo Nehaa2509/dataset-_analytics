@@ -41,6 +41,11 @@ A simple yet powerful online quiz platform built with Flask and SQLite. Perfect 
    python app.py
    ```
    Or simply click the "Run" button in Replit!
+   
+   **Optional**: Enable debug mode for development:
+   ```bash
+   DEBUG=true python app.py
+   ```
 
 5. **Access the application**
    - The app will run on `http://0.0.0.0:5000`
@@ -67,6 +72,16 @@ A simple yet powerful online quiz platform built with Flask and SQLite. Perfect 
 4. **Run the application**
    ```bash
    python app.py
+   ```
+   
+   **Optional**: Enable debug mode for development:
+   ```bash
+   DEBUG=true python app.py
+   ```
+   
+   **Optional**: Set a custom secret key for production:
+   ```bash
+   SECRET_KEY=your-secret-key-here python app.py
    ```
 
 5. **Access the application**
@@ -163,10 +178,13 @@ cursor.execute(
 
 ## Security Features
 
-- Password hashing using SHA-256
-- Session-based authentication
+- Secure password hashing using Werkzeug's pbkdf2:sha256 with salt
+- Session-based authentication with persistent secret key
 - Login required decorators for protected routes
 - SQL injection prevention using parameterized queries
+- Password minimum length validation (6 characters)
+- Username length validation (3-50 characters)
+- Debug mode disabled by default (enable via DEBUG environment variable)
 
 ## Customization
 
