@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - Online Quiz Platform{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="navbar">
+        <h1>🎯 Online Quiz Platform</h1>
+        <div>
+            <span style="margin-right: 20px;">Welcome, {{ username }}!</span>
+            <a href="{{ url_for('dashboard') }}">Dashboard</a>
+            <a href="{{ url_for('leaderboard') }}">Leaderboard</a>
+            <a href="{{ url_for('logout') }}">Logout</a>
+        </div>
+    </div>
+    
+    <h2 style="color: #667eea; margin-bottom: 20px;">Your Dashboard</h2>
+    
+    <div style="margin-bottom: 40px;">
+        <h3 style="color: #333; margin-bottom: 15px;">Available Quizzes</h3>
+        
+        {% if quizzes %}
+            {% for quiz in quizzes %}
+            <div class="quiz-card">
+                <h3>{{ quiz['title'] }}</h3>
+                <p>{{ quiz['description'] }}</p>
+                <a href="{{ url_for('take_quiz', quiz_id=quiz['id']) }}" class="btn">Start Quiz</a>
+            </div>
+            {% endfor %}
+        {% else %}
+            <p style="color: #666;">No quizzes available yet. Check back later!</p>
+        {% endif %}
+    </div>
+    
+    <div>
+        <h3 style="color: #333; margin-bottom: 15px;">Your Recent Scores</h3>
+        
+        {% if recent_scores %}
+            <table>
+                <thead>
+                    <tr>
+                        <th>Quiz</th>
+                        <th>Score</th>
+                        <th>Total Questions</th>
+                        <th>Date</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for score in recent_scores %}
+                    <tr>
+                        <td>{{ score['title'] }}</td>
+                        <td><strong>{{ score['score'] }}</strong></td>
+                        <td>{{ score['total_questions'] }}</td>
+                        <td>{{ score['completed_at'] }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <p style="color: #666;">You haven't taken any quizzes yet. Start your first quiz above!</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

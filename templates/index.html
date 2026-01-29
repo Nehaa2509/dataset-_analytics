@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+
+{% block title %}Welcome - Online Quiz Platform{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="navbar">
+        <h1>🎯 Online Quiz Platform</h1>
+        <div>
+            <a href="{{ url_for('login') }}">Login</a>
+            <a href="{{ url_for('register') }}">Register</a>
+        </div>
+    </div>
+    
+    <div style="text-align: center; padding: 50px 0;">
+        <h2 style="color: #667eea; font-size: 36px; margin-bottom: 20px;">Welcome to the Quiz Platform</h2>
+        <p style="font-size: 18px; color: #666; margin-bottom: 30px;">
+            Test your knowledge, compete with others, and climb the leaderboard!
+        </p>
+        
+        <div style="margin-top: 40px;">
+            <a href="{{ url_for('register') }}" class="btn" style="margin-right: 10px;">Get Started</a>
+            <a href="{{ url_for('login') }}" class="btn btn-secondary">Already have an account?</a>
+        </div>
+        
+        <div style="margin-top: 60px; display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 30px;">
+            <div style="padding: 20px; background: #f8f9fa; border-radius: 8px;">
+                <h3 style="color: #667eea; margin-bottom: 10px;">📝 Multiple Quizzes</h3>
+                <p style="color: #666;">Choose from various quizzes on different topics</p>
+            </div>
+            <div style="padding: 20px; background: #f8f9fa; border-radius: 8px;">
+                <h3 style="color: #667eea; margin-bottom: 10px;">⏱️ Real-time Scoring</h3>
+                <p style="color: #666;">Get instant feedback on your performance</p>
+            </div>
+            <div style="padding: 20px; background: #f8f9fa; border-radius: 8px;">
+                <h3 style="color: #667eea; margin-bottom: 10px;">🏆 Leaderboard</h3>
+                <p style="color: #666;">Compete with others and track your rank</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
