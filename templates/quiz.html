@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+
+{% block title %}{{ quiz['title'] }} - Online Quiz Platform{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="navbar">
+        <h1>🎯 Online Quiz Platform</h1>
+        <div>
+            <span style="margin-right: 20px;">Welcome, {{ session.username }}!</span>
+            <a href="{{ url_for('dashboard') }}">Dashboard</a>
+            <a href="{{ url_for('leaderboard') }}">Leaderboard</a>
+            <a href="{{ url_for('logout') }}">Logout</a>
+        </div>
+    </div>
+    
+    <h2 style="color: #667eea; margin-bottom: 10px;">{{ quiz['title'] }}</h2>
+    <p style="color: #666; margin-bottom: 30px;">{{ quiz['description'] }}</p>
+    
+    <form method="POST" action="{{ url_for('submit_quiz', quiz_id=quiz['id']) }}">
+        {% for question in questions %}
+        <div class="quiz-card">
+            <h3 style="color: #333; margin-bottom: 15px;">Question {{ loop.index }}</h3>
+            <p style="font-size: 16px; margin-bottom: 20px;"><strong>{{ question['question_text'] }}</strong></p>
+            
+            <div style="margin-left: 20px;">
+                <div style="margin-bottom: 10px;">
+                    <label>
+                        <input type="radio" name="question_{{ question['id'] }}" value="A" required>
+                        <span style="margin-left: 10px;">A) {{ question['option_a'] }}</span>
+                    </label>
+                </div>
+                <div style="margin-bottom: 10px;">
+                    <label>
+                        <input type="radio" name="question_{{ question['id'] }}" value="B" required>
+                        <span style="margin-left: 10px;">B) {{ question['option_b'] }}</span>
+                    </label>
+                </div>
+                <div style="margin-bottom: 10px;">
+                    <label>
+                        <input type="radio" name="question_{{ question['id'] }}" value="C" required>
+                        <span style="margin-left: 10px;">C) {{ question['option_c'] }}</span>
+                    </label>
+                </div>
+                <div style="margin-bottom: 10px;">
+                    <label>
+                        <input type="radio" name="question_{{ question['id'] }}" value="D" required>
+                        <span style="margin-left: 10px;">D) {{ question['option_d'] }}</span>
+                    </label>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+        
+        <div style="margin-top: 30px; text-align: center;">
+            <button type="submit" class="btn">Submit Quiz</button>
+            <a href="{{ url_for('dashboard') }}" class="btn btn-secondary" style="margin-left: 10px;">Cancel</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

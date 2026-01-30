@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+
+{% block title %}Leaderboard - Online Quiz Platform{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="navbar">
+        <h1>🎯 Online Quiz Platform</h1>
+        <div>
+            <a href="{{ url_for('dashboard') }}">Dashboard</a>
+            <a href="{{ url_for('leaderboard') }}">Leaderboard</a>
+            <a href="{{ url_for('logout') }}">Logout</a>
+        </div>
+    </div>
+    
+    <h2 style="color: #667eea; margin-bottom: 20px;">🏆 Leaderboard</h2>
+    <p style="color: #666; margin-bottom: 30px;">Top scores from all users across all quizzes</p>
+    
+    {% if scores %}
+        <table>
+            <thead>
+                <tr>
+                    <th>Rank</th>
+                    <th>Username</th>
+                    <th>Quiz</th>
+                    <th>Score</th>
+                    <th>Total Questions</th>
+                    <th>Completed At</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for score in scores %}
+                <tr>
+                    <td>
+                        {% if loop.index == 1 %}
+                            🥇
+                        {% elif loop.index == 2 %}
+                            🥈
+                        {% elif loop.index == 3 %}
+                            🥉
+                        {% else %}
+                            {{ loop.index }}
+                        {% endif %}
+                    </td>
+                    <td><strong>{{ score['username'] }}</strong></td>
+                    <td>{{ score['quiz_title'] }}</td>
+                    <td>{{ score['score'] }}</td>
+                    <td>{{ score['total_questions'] }}</td>
+                    <td>{{ score['completed_at'] }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <p style="color: #666;">No scores yet. Be the first to take a quiz!</p>
+    {% endif %}
+    
+    <div style="margin-top: 30px;">
+        <a href="{{ url_for('dashboard') }}" class="btn">Back to Dashboard</a>
+    </div>
+</div>
+{% endblock %}
