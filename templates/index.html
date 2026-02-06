@@ -2,7 +2,7 @@
 <html>
 <head>
     <title>HabitLogic - Habit Tracker</title>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
     <style>
         body { 
             font-family: 'Courier New', monospace; 
@@ -133,6 +133,13 @@
 
         // Initialize the chart
         function initChart(progressData) {
+            // Check if Chart.js is loaded
+            if (typeof Chart === 'undefined') {
+                console.log('Chart.js not loaded, using fallback visualization');
+                displayFallbackChart(progressData);
+                return;
+            }
+            
             const ctx = document.getElementById('progressChart').getContext('2d');
             
             if (progressChart) {
@@ -194,6 +201,103 @@
                     }
                 }
             });
+        }
+
+        // Fallback visualization when Chart.js is not available
+        function displayFallbackChart(progressData) {
+            const canvas = document.getElementById('progressChart');
+            const ctx = canvas.getContext('2d');
+            
+            // Set canvas size
+            canvas.width = canvas.offsetWidth;
+            canvas.height = 250;
+            
+            const width = canvas.width;
+            const height = canvas.height;
+            const padding = 40;
+            const chartWidth = width - 2 * padding;
+            const chartHeight = height - 2 * padding;
+            
+            // Clear canvas
+            ctx.clearRect(0, 0, width, height);
+            
+            // Draw background
+            ctx.fillStyle = '#fff';
+            ctx.fillRect(0, 0, width, height);
+            
+            // Draw axes
+            ctx.strokeStyle = '#34495e';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(padding, padding);
+            ctx.lineTo(padding, height - padding);
+            ctx.lineTo(width - padding, height - padding);
+            ctx.stroke();
+            
+            // Draw grid lines
+            ctx.strokeStyle = '#ecf0f1';
+            ctx.lineWidth = 1;
+            for (let i = 0; i <= habits.length; i++) {
+                const y = height - padding - (i / habits.length) * chartHeight;
+                ctx.beginPath();
+                ctx.moveTo(padding, y);
+                ctx.lineTo(width - padding, y);
+                ctx.stroke();
+            }
+            
+            // Draw data points and lines
+            const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+            const stepX = chartWidth / (days.length - 1);
+            
+            ctx.strokeStyle = '#3498db';
+            ctx.fillStyle = '#3498db';
+            ctx.lineWidth = 3;
+            
+            ctx.beginPath();
+            for (let i = 0; i < progressData.length; i++) {
+                const x = padding + i * stepX;
+                const y = height - padding - (progressData[i] / habits.length) * chartHeight;
+                
+                if (i === 0) {
+                    ctx.moveTo(x, y);
+                } else {
+                    ctx.lineTo(x, y);
+                }
+            }
+            ctx.stroke();
+            
+            // Draw points
+            for (let i = 0; i < progressData.length; i++) {
+                const x = padding + i * stepX;
+                const y = height - padding - (progressData[i] / habits.length) * chartHeight;
+                
+                ctx.beginPath();
+                ctx.arc(x, y, 5, 0, 2 * Math.PI);
+                ctx.fill();
+            }
+            
+            // Draw labels
+            ctx.fillStyle = '#2c3e50';
+            ctx.font = '12px Courier New';
+            ctx.textAlign = 'center';
+            
+            // X-axis labels
+            for (let i = 0; i < days.length; i++) {
+                const x = padding + i * stepX;
+                ctx.fillText(days[i], x, height - padding + 20);
+            }
+            
+            // Y-axis labels
+            ctx.textAlign = 'right';
+            for (let i = 0; i <= habits.length; i += 2) {
+                const y = height - padding - (i / habits.length) * chartHeight;
+                ctx.fillText(i.toString(), padding - 10, y + 4);
+            }
+            
+            // Draw title
+            ctx.textAlign = 'center';
+            ctx.font = 'bold 14px Courier New';
+            ctx.fillText('Habits Completed Per Day', width / 2, 20);
         }
 
         // Load saved data from the backend
