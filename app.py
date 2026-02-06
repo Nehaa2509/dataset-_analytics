@@ -50,8 +50,13 @@ def update_habit():
     conn = sqlite3.connect('habits.db')
     c = conn.cursor()
     # Logic to upsert (update or insert) the habit status
-    c.execute("INSERT OR REPLACE INTO progress (date, habit_name, status) VALUES (?, ?, ?)",
-              (data['date'], data['habit_name'], data['status']))
+    # First try to update existing record
+    c.execute("UPDATE progress SET status = ? WHERE date = ? AND habit_name = ?",
+              (data['status'], data['date'], data['habit_name']))
+    # If no rows were updated, insert a new record
+    if c.rowcount == 0:
+        c.execute("INSERT INTO progress (date, habit_name, status) VALUES (?, ?, ?)",
+                  (data['date'], data['habit_name'], data['status']))
     conn.commit()
     conn.close()
     return jsonify({"success": True})
