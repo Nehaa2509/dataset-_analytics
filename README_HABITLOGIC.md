@@ -164,13 +164,18 @@ Returns: Array of daily completion counts
 
 ### Running in Debug Mode
 
-The application runs in debug mode by default:
+The application runs in debug mode by default for development:
 
 ```python
 app.run(debug=True, host='0.0.0.0', port=5000)
 ```
 
-For production, change `debug=True` to `debug=False`.
+**⚠️ SECURITY WARNING**: For production deployment, change `debug=True` to `debug=False` to prevent security vulnerabilities. Debug mode can allow attackers to run arbitrary code through the debugger.
+
+**Production Configuration:**
+```python
+app.run(debug=False, host='0.0.0.0', port=5000)
+```
 
 ## 🤝 Contributing
 
