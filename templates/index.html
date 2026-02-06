@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>HabitLogic - Habit Tracker</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body { 
+            font-family: 'Courier New', monospace; 
+            background: #fdf6e3; 
+            padding: 20px;
+            margin: 0;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        h2 { 
+            text-align: center; 
+            color: #2c3e50;
+            margin-bottom: 20px;
+        }
+        table { 
+            border-collapse: collapse; 
+            width: 100%; 
+            background: white;
+            margin-bottom: 30px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        th, td { 
+            border: 1px solid #34495e; 
+            padding: 12px; 
+            text-align: center; 
+        }
+        th {
+            background-color: #34495e;
+            color: white;
+            font-weight: bold;
+        }
+        td:first-child {
+            text-align: left;
+            font-weight: 500;
+            background-color: #ecf0f1;
+        }
+        .check-btn { 
+            cursor: pointer; 
+            width: 25px; 
+            height: 25px;
+            accent-color: #27ae60;
+        }
+        .check-btn:hover {
+            transform: scale(1.1);
+        }
+        #graph-container { 
+            margin-top: 30px; 
+            padding: 20px;
+            background: white; 
+            border: 1px solid #34495e;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        #graph-container h3 {
+            margin-top: 0;
+            color: #2c3e50;
+            text-align: center;
+        }
+        .stats {
+            text-align: center;
+            margin: 20px 0;
+            padding: 15px;
+            background: white;
+            border: 1px solid #34495e;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .stats span {
+            display: inline-block;
+            margin: 0 20px;
+            font-size: 16px;
+        }
+        .stats strong {
+            color: #27ae60;
+            font-size: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>🎯 HABITLOGIC TRACKER - WEEK {{ week_number }}</h2>
+        
+        <table>
+            <tr>
+                <th>TASKS</th>
+                <th>Mon</th>
+                <th>Tue</th>
+                <th>Wed</th>
+                <th>Thu</th>
+                <th>Fri</th>
+                <th>Sat</th>
+                <th>Sun</th>
+            </tr>
+            {% for habit in habits %}
+            <tr>
+                <td>{{ habit }}</td>
+                {% for i in range(7) %}
+                <td>
+                    <input type="checkbox" 
+                           class="check-btn habit-check" 
+                           data-habit="{{ habit }}"
+                           data-date="{{ dates[i] }}"
+                           data-day="{{ i }}">
+                </td>
+                {% endfor %}
+            </tr>
+            {% endfor %}
+        </table>
+
+        <div class="stats">
+            <span>Total Habits: <strong id="totalHabits">{{ habits|length }}</strong></span>
+            <span>Completed Today: <strong id="completedToday">0</strong></span>
+            <span>Today's Score: <strong id="todayScore">0%</strong></span>
+        </div>
+
+        <div id="graph-container">
+            <h3>📈 WEEKLY PROGRESS</h3>
+            <canvas id="progressChart"></canvas>
+        </div>
+    </div>
+
+    <script>
+        const dates = {{ dates|tojson }};
+        const habits = {{ habits|tojson }};
+        const today = "{{ today }}";
+        
+        let progressChart;
+
+        // Initialize the chart
+        function initChart(progressData) {
+            const ctx = document.getElementById('progressChart').getContext('2d');
+            
+            if (progressChart) {
+                progressChart.destroy();
+            }
+            
+            progressChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+                    datasets: [{
+                        label: 'Completed Habits',
+                        data: progressData,
+                        borderColor: '#3498db',
+                        backgroundColor: 'rgba(52, 152, 219, 0.1)',
+                        tension: 0.4,
+                        fill: true,
+                        pointRadius: 5,
+                        pointHoverRadius: 7,
+                        pointBackgroundColor: '#3498db',
+                        pointBorderColor: '#fff',
+                        pointBorderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: habits.length,
+                            ticks: {
+                                stepSize: 1
+                            },
+                            title: {
+                                display: true,
+                                text: 'Number of Habits Completed'
+                            }
+                        },
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'Days of the Week'
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: 'top'
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return context.parsed.y + ' out of ' + habits.length + ' habits';
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Load saved data from the backend
+        async function loadData() {
+            try {
+                const response = await fetch('/get_data');
+                const data = await response.json();
+                
+                // Update checkboxes based on saved data
+                document.querySelectorAll('.habit-check').forEach(checkbox => {
+                    const habit = checkbox.dataset.habit;
+                    const date = checkbox.dataset.date;
+                    const key = `${date}_${habit}`;
+                    
+                    if (data[key] === 1) {
+                        checkbox.checked = true;
+                    }
+                });
+                
+                updateStats();
+                loadProgress();
+            } catch (error) {
+                console.error('Error loading data:', error);
+            }
+        }
+
+        // Load progress data for the chart
+        async function loadProgress() {
+            try {
+                const response = await fetch('/get_progress');
+                const progressData = await response.json();
+                initChart(progressData);
+            } catch (error) {
+                console.error('Error loading progress:', error);
+                initChart([0, 0, 0, 0, 0, 0, 0]);
+            }
+        }
+
+        // Update statistics
+        function updateStats() {
+            const totalHabits = habits.length;
+            const todayCheckboxes = document.querySelectorAll(`.habit-check[data-date="${today}"]`);
+            let completedToday = 0;
+            
+            todayCheckboxes.forEach(cb => {
+                if (cb.checked) completedToday++;
+            });
+            
+            const score = totalHabits > 0 ? Math.round((completedToday / totalHabits) * 100) : 0;
+            
+            document.getElementById('totalHabits').textContent = totalHabits;
+            document.getElementById('completedToday').textContent = completedToday;
+            document.getElementById('todayScore').textContent = score + '%';
+        }
+
+        // Handle checkbox changes
+        document.addEventListener('DOMContentLoaded', function() {
+            // Load existing data
+            loadData();
+            
+            // Add event listeners to all checkboxes
+            document.querySelectorAll('.habit-check').forEach(checkbox => {
+                checkbox.addEventListener('change', async function() {
+                    const habit = this.dataset.habit;
+                    const date = this.dataset.date;
+                    const status = this.checked ? 1 : 0;
+                    
+                    try {
+                        const response = await fetch('/update', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                            },
+                            body: JSON.stringify({
+                                date: date,
+                                habit_name: habit,
+                                status: status
+                            })
+                        });
+                        
+                        if (response.ok) {
+                            updateStats();
+                            loadProgress();
+                        }
+                    } catch (error) {
+                        console.error('Error updating habit:', error);
+                        // Revert checkbox on error
+                        this.checked = !this.checked;
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>
